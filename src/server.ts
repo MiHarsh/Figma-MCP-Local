@@ -3,13 +3,11 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { Server } from "http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { ProxyAgent, EnvHttpProxyAgent, setGlobalDispatcher } from "undici";
 import { Logger } from "./utils/logger.js";
 import { createServer } from "./mcp/index.js";
 import type { ServerConfig } from "./config.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
-import * as telemetry from "./telemetry/index.js";
 
 let httpServer: Server | null = null;
 
@@ -23,48 +21,18 @@ const activeConnections = new Set<ActiveConnection>();
  * Start the MCP server in either stdio or HTTP mode.
  */
 export async function startServer(config: ServerConfig): Promise<void> {
-  if (config.proxy) {
-    setGlobalDispatcher(new ProxyAgent(config.proxy));
-  } else {
-    // EnvHttpProxyAgent automatically respects HTTP_PROXY/HTTPS_PROXY/NO_PROXY
-    // env vars when present, and falls through to direct connections when absent.
-    // Suppress the UNDICI-EHPA experimental warning — the API is stable
-    // enough for our use case and the warning is noise for end users.
-    const { emitWarning } = process;
-    process.emitWarning = () => {};
-    setGlobalDispatcher(new EnvHttpProxyAgent());
-    process.emitWarning = emitWarning;
-  }
-
-  const telemetryEnabled = telemetry.initTelemetry({
-    optOut: config.noTelemetry,
-    redactFromErrors: [config.auth.figmaApiKey, config.auth.figmaOAuthToken],
-  });
-
-  if (telemetryEnabled) {
-    // stderr (not Logger.log) because in HTTP mode Logger.log writes to stdout,
-    // and in stdio mode stdout is reserved for MCP protocol messages. stderr
-    // is safe in both modes.
-    process.stderr.write(
-      "Usage telemetry enabled. Disable: FRAMELINK_TELEMETRY=off or DO_NOT_TRACK=1\n",
-    );
-  }
-
   const serverOptions = {
-    transport: config.isStdioMode ? ("stdio" as const) : ("http" as const),
     outputFormat: config.outputFormat as "yaml" | "json",
-    skipImageDownloads: config.skipImageDownloads,
-    imageDir: config.imageDir,
   };
 
   if (config.isStdioMode) {
-    const server = createServer(config.auth, serverOptions);
+    const server = createServer(serverOptions);
     const transport = new StdioServerTransport();
     await server.connect(transport);
     registerShutdownHandlers(async () => {});
   } else {
-    const createMcpServer = () => createServer(config.auth, serverOptions);
-    console.log(`Initializing Figma MCP Server in HTTP mode on ${config.host}:${config.port}...`);
+    const createMcpServer = () => createServer(serverOptions);
+    console.log(`Initializing Figma MCP Local Server in HTTP mode on ${config.host}:${config.port}...`);
     await startHttpServer(config.host, config.port, createMcpServer);
 
     registerShutdownHandlers(async () => {
@@ -88,13 +56,9 @@ function registerShutdownHandlers(onShutdown: () => Promise<void>): void {
   const handle = async () => {
     if (shuttingDown) return;
     shuttingDown = true;
-    // onShutdown may throw (e.g. stopHttpServer failures); telemetry.shutdown
-    // swallows its own errors (see src/telemetry/client.ts). Use try/finally
-    // so process.exit(0) always runs regardless of onShutdown failure.
     try {
       await onShutdown();
     } finally {
-      await telemetry.shutdown();
       process.exit(0);
     }
   };

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { envBool, envInt, envStr, resolve } from "~/config.js";
+import { envInt, envStr, resolve } from "~/config.js";
 
 describe("resolve", () => {
   it("CLI flag wins over env and default", () => {
@@ -60,30 +60,5 @@ describe("envInt", () => {
 
   it("returns undefined when none of the names are set", () => {
     expect(envInt("NOPE_A", "NOPE_B")).toBeUndefined();
-  });
-});
-
-describe("envBool", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it('returns true for "true"', () => {
-    vi.stubEnv("TEST_BOOL", "true");
-    expect(envBool("TEST_BOOL")).toBe(true);
-  });
-
-  it('returns false for "false"', () => {
-    vi.stubEnv("TEST_BOOL", "false");
-    expect(envBool("TEST_BOOL")).toBe(false);
-  });
-
-  it("returns undefined for any other value", () => {
-    vi.stubEnv("TEST_BOOL", "yes");
-    expect(envBool("TEST_BOOL")).toBeUndefined();
-  });
-
-  it("returns undefined when not set", () => {
-    expect(envBool("TEST_BOOL_MISSING")).toBeUndefined();
   });
 });

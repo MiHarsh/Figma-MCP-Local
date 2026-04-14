@@ -1,33 +1,17 @@
 import { createServer } from "../mcp/index.js";
-import { config } from "dotenv";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { CallToolResultSchema } from "@modelcontextprotocol/sdk/types.js";
-import yaml from "js-yaml";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-
-config();
 
 const describeOrSkip = process.env.RUN_FIGMA_INTEGRATION === "1" ? describe : describe.skip;
 
-describeOrSkip("Figma MCP Server Tests", () => {
+describeOrSkip("Figma MCP Local Server Tests", () => {
   let server: McpServer;
   let client: Client;
-  let figmaApiKey: string;
-  let figmaFileKey: string;
 
   beforeAll(async () => {
-    figmaApiKey = process.env.FIGMA_API_KEY || "";
-    figmaFileKey = process.env.FIGMA_FILE_KEY || "";
-
-    server = createServer(
-      {
-        figmaApiKey,
-        figmaOAuthToken: "",
-        useOAuth: false,
-      },
-      { transport: "stdio" },
-    );
+    server = createServer();
 
     client = new Client({
       name: "figma-test-client",
@@ -43,28 +27,20 @@ describeOrSkip("Figma MCP Server Tests", () => {
     await client.close();
   });
 
-  describe("Get Figma Data", () => {
-    it("should be able to get Figma file data", async () => {
-      const args = {
-        fileKey: figmaFileKey,
-      };
-
+  describe("Get Figma Data from JSON", () => {
+    it("should return error for missing file", async () => {
       const result = await client.request(
         {
           method: "tools/call",
           params: {
-            name: "get_figma_data",
-            arguments: args,
+            name: "get_figma_data_from_json",
+            arguments: { filePath: "/tmp/nonexistent-file.json" },
           },
         },
         CallToolResultSchema,
       );
 
-      const firstContent = result.content[0];
-      const content = firstContent.type === "text" ? firstContent.text : "";
-      const parsed = yaml.load(content);
-
-      expect(parsed).toBeDefined();
+      expect(result.isError).toBe(true);
     }, 60000);
   });
 });

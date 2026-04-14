@@ -3,21 +3,14 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { createServer } from "../mcp/index.js";
 import { startHttpServer, stopHttpServer } from "../server.js";
 import type { AddressInfo } from "net";
-import type { FigmaAuthOptions } from "../services/figma.js";
 import { spawn, type ChildProcess } from "child_process";
-
-const dummyAuth: FigmaAuthOptions = {
-  figmaApiKey: "test-key-not-used",
-  figmaOAuthToken: "",
-  useOAuth: false,
-};
 
 describe("StreamableHTTP transport", () => {
   let port: number;
 
   beforeAll(async () => {
     const httpServer = await startHttpServer("127.0.0.1", 0, () =>
-      createServer(dummyAuth, { transport: "http" }),
+      createServer(),
     );
     port = (httpServer.address() as AddressInfo).port;
   }, 15_000);
@@ -39,8 +32,7 @@ describe("StreamableHTTP transport", () => {
     const { tools } = await client.listTools();
     const toolNames = tools.map((t) => t.name);
 
-    expect(toolNames).toContain("get_figma_data");
-    expect(toolNames).toContain("download_figma_images");
+    expect(toolNames).toContain("get_figma_data_from_json");
 
     await client.close();
   }, 15_000);
@@ -54,8 +46,7 @@ describe("StreamableHTTP transport", () => {
     const { tools } = await client.listTools();
     const toolNames = tools.map((t) => t.name);
 
-    expect(toolNames).toContain("get_figma_data");
-    expect(toolNames).toContain("download_figma_images");
+    expect(toolNames).toContain("get_figma_data_from_json");
 
     await client.close();
   }, 15_000);
@@ -87,7 +78,7 @@ describe("Method not allowed", () => {
 
   beforeAll(async () => {
     const httpServer = await startHttpServer("127.0.0.1", 0, () =>
-      createServer(dummyAuth, { transport: "http" }),
+      createServer(),
     );
     port = (httpServer.address() as AddressInfo).port;
   }, 15_000);
@@ -126,7 +117,7 @@ describe("Multi-client test", () => {
 
   beforeAll(async () => {
     const httpServer = await startHttpServer("127.0.0.1", 0, () =>
-      createServer(dummyAuth, { transport: "http" }),
+      createServer(),
     );
     port = (httpServer.address() as AddressInfo).port;
   }, 15_000);
@@ -150,8 +141,8 @@ describe("Multi-client test", () => {
 
     const [toolsA, toolsB] = await Promise.all([clientA.listTools(), clientB.listTools()]);
 
-    expect(toolsA.tools.map((t) => t.name)).toContain("get_figma_data");
-    expect(toolsB.tools.map((t) => t.name)).toContain("get_figma_data");
+    expect(toolsA.tools.map((t) => t.name)).toContain("get_figma_data_from_json");
+    expect(toolsB.tools.map((t) => t.name)).toContain("get_figma_data_from_json");
 
     await Promise.all([clientA.close(), clientB.close()]);
   }, 15_000);
@@ -160,7 +151,7 @@ describe("Multi-client test", () => {
 describe("Server lifecycle", () => {
   it("starts and listens on assigned port", async () => {
     const httpServer = await startHttpServer("127.0.0.1", 0, () =>
-      createServer(dummyAuth, { transport: "http" }),
+      createServer(),
     );
     const port = (httpServer.address() as AddressInfo).port;
 
@@ -170,7 +161,7 @@ describe("Server lifecycle", () => {
   }, 15_000);
 
   it("stopHttpServer shuts down cleanly without hanging", async () => {
-    await startHttpServer("127.0.0.1", 0, () => createServer(dummyAuth, { transport: "http" }));
+    await startHttpServer("127.0.0.1", 0, () => createServer());
 
     const timeout = new Promise<"timeout">((resolve) =>
       setTimeout(() => resolve("timeout"), 5_000).unref(),
@@ -194,7 +185,7 @@ describe("Process-level HTTP startup", () => {
   /** Spawn bin.ts and resolve once the server logs that it's listening. */
   function spawnAndWaitForReady(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      child = spawn("tsx", ["src/bin.ts", `--figma-api-key=test-key`, `--port=${TEST_PORT}`], {
+      child = spawn("tsx", ["src/bin.ts", `--port=${TEST_PORT}`], {
         stdio: ["pipe", "pipe", "pipe"],
       });
 
