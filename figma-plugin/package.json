@@ -1,0 +1,14 @@
+{
+  "name": "framelink-figma-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Figma plugin to export design data locally for Framelink MCP",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.100.0",
+    "esbuild": "^0.24.0"
+  }
+}

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 12px;
+        color: #333;
+        padding: 16px;
+        background: #fff;
+      }
+
+      h2 {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+
+      .section {
+        margin-bottom: 16px;
+      }
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+        cursor: pointer;
+      }
+
+      .info {
+        color: #666;
+        font-size: 11px;
+        margin-bottom: 12px;
+        line-height: 1.4;
+      }
+
+      .selection-info {
+        background: #f5f5f5;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 16px;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .selection-info .count {
+        font-weight: 600;
+        color: #18a0fb;
+      }
+
+      button {
+        width: 100%;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      button.primary {
+        background: #18a0fb;
+        color: #fff;
+      }
+
+      button.primary:hover {
+        background: #0d8de5;
+      }
+
+      button.primary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      button.secondary {
+        background: #f0f0f0;
+        color: #333;
+        margin-top: 8px;
+      }
+
+      button.secondary:hover {
+        background: #e0e0e0;
+      }
+
+      .status {
+        margin-top: 12px;
+        padding: 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        display: none;
+      }
+
+      .status.success {
+        display: block;
+        background: #e6f9e6;
+        color: #1a7a1a;
+      }
+
+      .status.error {
+        display: block;
+        background: #fde8e8;
+        color: #c53030;
+      }
+
+      .status.working {
+        display: block;
+        background: #e8f0fe;
+        color: #1a56db;
+      }
+
+      .depth-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .depth-control input[type="number"] {
+        width: 60px;
+        padding: 4px 6px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+
+      .depth-control input[type="number"]:disabled {
+        background: #f5f5f5;
+        color: #999;
+      }
+
+      .divider {
+        height: 1px;
+        background: #e8e8e8;
+        margin: 16px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Framelink Exporter</h2>
+
+    <div class="selection-info" id="selectionInfo">
+      <div>Select nodes in Figma to export.</div>
+    </div>
+
+    <div class="section">
+      <label>
+        <input type="radio" name="exportScope" value="selection" checked />
+        Export selected nodes
+      </label>
+      <label>
+        <input type="radio" name="exportScope" value="page" />
+        Export current page
+      </label>
+    </div>
+
+    <div class="section">
+      <label>
+        <input type="checkbox" id="limitDepth" />
+        Limit traversal depth
+      </label>
+      <div class="depth-control">
+        <input type="number" id="depthValue" min="1" max="50" value="10" disabled />
+        <span class="info" style="margin: 0">levels deep</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="primary" id="exportBtn" disabled>Export as JSON</button>
+    <button class="secondary" id="exportPageBtn">Export Current Page</button>
+
+    <div class="status" id="status"></div>
+
+    <script>
+      const exportBtn = document.getElementById("exportBtn");
+      const exportPageBtn = document.getElementById("exportPageBtn");
+      const statusEl = document.getElementById("status");
+      const selectionInfo = document.getElementById("selectionInfo");
+      const limitDepthCheck = document.getElementById("limitDepth");
+      const depthInput = document.getElementById("depthValue");
+
+      limitDepthCheck.addEventListener("change", () => {
+        depthInput.disabled = !limitDepthCheck.checked;
+      });
+
+      // Update selection info from plugin
+      window.onmessage = (event) => {
+        const msg = event.data.pluginMessage;
+        if (!msg) return;
+
+        if (msg.type === "selection-changed") {
+          const count = msg.count;
+          if (count === 0) {
+            selectionInfo.innerHTML = "<div>Select nodes in Figma to export.</div>";
+            exportBtn.disabled = true;
+          } else {
+            selectionInfo.innerHTML = `<div><span class="count">${count}</span> node${count > 1 ? "s" : ""} selected</div><div>${msg.names.slice(0, 5).join(", ")}${count > 5 ? "..." : ""}</div>`;
+            exportBtn.disabled = false;
+          }
+        }
+
+        if (msg.type === "export-result") {
+          if (msg.success) {
+            // Trigger download in the UI iframe
+            const blob = new Blob([msg.data], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = msg.fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            statusEl.className = "status success";
+            statusEl.textContent = `Exported ${msg.nodeCount} nodes to ${msg.fileName}`;
+          } else {
+            statusEl.className = "status error";
+            statusEl.textContent = `Error: ${msg.error}`;
+          }
+        }
+
+        if (msg.type === "export-progress") {
+          statusEl.className = "status working";
+          statusEl.textContent = msg.message;
+        }
+      };
+
+      function getOptions() {
+        const scope = document.querySelector('input[name="exportScope"]:checked').value;
+        const depth = limitDepthCheck.checked ? parseInt(depthInput.value) : undefined;
+        return { scope, depth };
+      }
+
+      exportBtn.addEventListener("click", () => {
+        const { depth } = getOptions();
+        statusEl.className = "status working";
+        statusEl.textContent = "Exporting selected nodes...";
+        parent.postMessage(
+          { pluginMessage: { type: "export", scope: "selection", depth } },
+          "*",
+        );
+      });
+
+      exportPageBtn.addEventListener("click", () => {
+        const { depth } = getOptions();
+        statusEl.className = "status working";
+        statusEl.textContent = "Exporting current page...";
+        parent.postMessage(
+          { pluginMessage: { type: "export", scope: "page", depth } },
+          "*",
+        );
+      });
+    </script>
+  </body>
+</html>

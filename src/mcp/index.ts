@@ -7,8 +7,10 @@ import type { ToolExtra } from "./progress.js";
 import {
   downloadFigmaImagesTool,
   getFigmaDataTool,
+  getFigmaDataFromJsonTool,
   type DownloadImagesParams,
   type GetFigmaDataParams,
+  type GetFigmaDataFromJsonParams,
 } from "./tools/index.js";
 
 const serverInfo = {
@@ -87,6 +89,22 @@ function registerTools(
         options.transport,
         options.authMode,
         options.getClientInfo(),
+        extra,
+      ),
+  );
+
+  server.registerTool(
+    getFigmaDataFromJsonTool.name,
+    {
+      title: "Get Figma Data from JSON",
+      description: getFigmaDataFromJsonTool.description,
+      inputSchema: getFigmaDataFromJsonTool.parametersSchema,
+      annotations: { readOnlyHint: true },
+    },
+    (params: GetFigmaDataFromJsonParams, extra: ToolExtra) =>
+      getFigmaDataFromJsonTool.handler(
+        params,
+        options.outputFormat,
         extra,
       ),
   );
