@@ -8,12 +8,16 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write # Required for npm OIDC trusted publishing
+  id-token: write
 
 jobs:
   release-please:
-    if: ${{ github.repository_owner == 'GLips' }}
+    if: ${{ github.repository_owner == 'MiHarsh' }}
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
@@ -47,7 +51,7 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Publish to npm
-        run: pnpm publish --no-git-checks
+        run: pnpm publish --no-git-checks --provenance --access public
         env:
           NODE_ENV: production
         if: ${{ steps.release.outputs.release_created }}
@@ -58,13 +62,49 @@ jobs:
           jq --arg v "$VERSION" '.version = $v | .packages[0].version = $v' server.json > server.tmp && mv server.tmp server.json
         if: ${{ steps.release.outputs.release_created }}
 
-      - name: Install mcp-publisher
-        run: |
-          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
-        if: ${{ steps.release.outputs.release_created }}
+  # Build standalone binaries so users can download from GitHub Releases
+  # without needing Node.js installed
+  standalone-binaries:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x64
+            artifact: figma-local-mcp-linux-x64
+          - os: macos-latest
+            target: darwin-arm64
+            artifact: figma-local-mcp-darwin-arm64
+          - os: windows-latest
+            target: win-x64
+            artifact: figma-local-mcp-win-x64.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Publish to MCP Registry
-        run: |
-          ./mcp-publisher login github-oidc
-          ./mcp-publisher publish
-        if: ${{ steps.release.outputs.release_created }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.10.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
+
+      - name: Compile standalone binary
+        run: bun build dist/bin.js --compile --outfile ${{ matrix.artifact }}
+
+      - name: Upload binary to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload ${{ needs.release-please.outputs.tag_name }} ${{ matrix.artifact }} --clobber

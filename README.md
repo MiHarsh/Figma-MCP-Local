@@ -1,8 +1,8 @@
 <div align="center">
   <h1>Figma MCP Local</h1>
   <h3>Use Figma designs with AI coding agents — without an API key.<br/>Export from Figma once, use locally forever.</h3>
-  <a href="https://github.com/MiHarsh/Figma-MCP-Local/blob/main/LICENSE">
-    <img alt="MIT License" src="https://img.shields.io/github/license/MiHarsh/Figma-MCP-Local" />
+  <a href="https://github.com/MiHarsh/figma-local-mcp/blob/main/LICENSE">
+    <img alt="MIT License" src="https://img.shields.io/github/license/MiHarsh/figma-local-mcp" />
   </a>
 </div>
 
@@ -46,11 +46,30 @@ Same quality output as the API-based approach — zero API calls.
 
 ## Quick Start
 
-### 1. Build the MCP server
+### Option A: Use via npx (recommended)
+
+No clone required. Just configure your editor's MCP config:
+
+```json
+{
+  "mcpServers": {
+    "figma-local": {
+      "command": "npx",
+      "args": ["-y", "figma-local-mcp", "--stdio"]
+    }
+  }
+}
+```
+
+Then skip to [step 2 (build the Figma plugin)](#2-build-the-figma-plugin).
+
+### Option B: Clone and build locally
+
+#### 1. Build the MCP server
 
 ```bash
-git clone https://github.com/MiHarsh/Figma-MCP-Local.git
-cd Figma-MCP-Local
+git clone https://github.com/MiHarsh/figma-local-mcp.git
+cd figma-local-mcp
 pnpm install
 pnpm build
 ```
@@ -82,27 +101,39 @@ npm run build
 
 Add to your editor's MCP config (`mcp.json`, `.cursor/mcp.json`, etc.):
 
-**Mac / Linux:**
+**Via npx (recommended — no clone needed):**
 ```json
 {
   "mcpServers": {
     "figma-local": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["/absolute/path/to/Figma-MCP-Local/dist/bin.js", "--stdio"]
+      "command": "npx",
+      "args": ["-y", "figma-local-mcp", "--stdio"]
     }
   }
 }
 ```
 
-**Windows:**
+**Via local clone — Mac / Linux:**
 ```json
 {
   "mcpServers": {
     "figma-local": {
       "type": "stdio",
       "command": "node",
-      "args": ["C:\\path\\to\\Figma-MCP-Local\\dist\\bin.js", "--stdio"]
+      "args": ["/absolute/path/to/figma-local-mcp/dist/bin.js", "--stdio"]
+    }
+  }
+}
+```
+
+**Via local clone — Windows:**
+```json
+{
+  "mcpServers": {
+    "figma-local": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["C:\\path\\to\\figma-local-mcp\\dist\\bin.js", "--stdio"]
     }
   }
 }
@@ -182,9 +213,8 @@ If you need **real-time API access** (live Figma data, image downloads), use the
       "args": ["-y", "figma-developer-mcp", "--figma-api-key=YOUR-KEY", "--stdio"]
     },
     "figma-local": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["/path/to/Figma-MCP-Local/dist/bin.js", "--stdio"]
+      "command": "npx",
+      "args": ["-y", "figma-local-mcp", "--stdio"]
     }
   }
 }

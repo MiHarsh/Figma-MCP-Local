@@ -1,6 +1,6 @@
-# Framelink MCP for Figma
+# figma-local-mcp
 
-Framelink MCP for Figma is a Model Context Protocol (MCP) server that gives AI coding tools (Cursor, etc.) access to Figma design data. It fetches Figma files/nodes via the Figma API, simplifies the response to include only relevant layout and styling information, and serves it to AI clients.
+figma-local-mcp is a Model Context Protocol (MCP) server that lets AI coding tools consume Figma design data from local JSON files — no API key, no rate limits, no internet required. Built on Framelink's extractor pipeline, it fetches and simplifies Figma data to include only relevant layout and styling information.
 
 ## Build & Development Commands
 

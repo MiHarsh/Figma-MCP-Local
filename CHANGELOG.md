@@ -1,4 +1,4 @@
-# figma-developer-mcp
+# figma-local-mcp
 
 ## [0.10.1](https://github.com/GLips/Figma-Context-MCP/compare/v0.10.0...v0.10.1) (2026-04-10)
 

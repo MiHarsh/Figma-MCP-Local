@@ -1,12 +1,12 @@
 {
-  "name": "figma-developer-mcp",
-  "version": "0.10.1",
-  "mcpName": "io.github.GLips/Figma-Context-MCP",
-  "description": "Give your coding agent access to your Figma data. Implement designs in any framework in one-shot.",
+  "name": "figma-local-mcp",
+  "version": "0.1.0",
+  "mcpName": "io.github.MiHarsh/figma-local-mcp",
+  "description": "Consume Figma design data from local JSON files — no API key, no rate limits, no internet required. Built on Framelink's extractor pipeline.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "figma-developer-mcp": "dist/bin.js"
+    "figma-local-mcp": "dist/bin.js"
   },
   "files": [
     "dist",
@@ -39,15 +39,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GLips/Figma-Context-MCP.git"
+    "url": "git+https://github.com/MiHarsh/figma-local-mcp.git"
   },
-  "homepage": "https://www.framelink.ai",
+  "homepage": "https://github.com/MiHarsh/figma-local-mcp",
   "keywords": [
     "figma",
     "mcp",
-    "typescript"
+    "local",
+    "offline",
+    "design",
+    "typescript",
+    "framelink"
   ],
-  "author": "",
+  "author": "MiHarsh",
   "license": "MIT",
   "dependencies": {
     "@figma/rest-api-spec": "^0.37.0",

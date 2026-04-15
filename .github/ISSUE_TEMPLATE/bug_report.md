@@ -11,7 +11,7 @@ A clear and concise description of what the bug is.
 
 **Software Versions**
 
-- Figma Developer MCP: Run the MCP with `--version`—either npx or locally, depending on how you're running it.
+- figma-local-mcp: Run the MCP with `--version`—either npx or locally, depending on how you're running it.
 - Node.js: `node --version`
 - NPM: `npm --version`
 - Operating System:
@@ -36,11 +36,11 @@ If applicable, add screenshots to help explain your problem. Often a screenshot 
 Provide your MCP JSON configuration, if applicable. E.g.
 
 ```
-    "figma-developer-mcp": {
+    "figma-local-mcp": {
       "command": "npx",
       "args": [
-        "figma-developer-mcp",
-        "--figma-api-key=REDACTED",
+        "-y",
+        "figma-local-mcp",
         "--stdio"
       ]
     }
@@ -50,10 +50,9 @@ Provide your MCP JSON configuration, if applicable. E.g.
 If you're running the MCP locally on the command line, include all the logs for those like so:
 
 ```
-> npx figma-developer-mcp --figma-api-key=REDACTED
+> npx figma-local-mcp --stdio
 
 Configuration:
-- FIGMA_API_KEY: ****8pXg (source: cli)
 - PORT: 3333 (source: default)
 
 Initializing Figma MCP Server in HTTP mode on 127.0.0.1:3333...
@@ -68,7 +67,7 @@ If you're running the MCP in a code editor like Cursor, there are MCP-specific l
 ```
 2025-03-18 11:36:22.251 [info] pnpx: Handling CreateClient action
 2025-03-18 11:36:22.251 [info] pnpx: getOrCreateClient for stdio server.  process.platform: darwin isElectron: true
-2025-03-18 11:36:22.251 [info] pnpx: Starting new stdio process with command: pnpx figma-developer-mcp --figma-api-key=REDACTED --stdio
+2025-03-18 11:36:22.251 [info] pnpx: Starting new stdio process with command: pnpx figma-local-mcp --stdio
 2025-03-18 11:36:23.987 [info] pnpx: Successfully connected to stdio server
 2025-03-18 11:36:23.987 [info] pnpx: Storing stdio client
 2025-03-18 11:36:23.988 [info]  MCP: Handling ListOfferings action

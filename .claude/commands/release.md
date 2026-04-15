@@ -5,7 +5,7 @@ Review and publish a new release.
 ## Steps
 
 1. **Check for a release-please PR:**
-   Run `gh pr list --repo GLips/Figma-Context-MCP --label "autorelease: pending" --json number,title,url` to find the open release PR.
+   Run `gh pr list --repo MiHarsh/figma-local-mcp --label "autorelease: pending" --json number,title,url` to find the open release PR.
 
    If no release PR exists, inform the user: "No pending release PR. Release-please creates one automatically when conventional commits (`fix:`, `feat:`) land on `main`."
 
@@ -24,8 +24,8 @@ Review and publish a new release.
    - **Cancel** — Stop without merging
 
 4. **Merge the release PR:**
-   Run `gh pr merge <number> --squash --repo GLips/Figma-Context-MCP`
+   Run `gh pr merge <number> --squash --repo MiHarsh/figma-local-mcp`
 
 5. **Verify:**
-   Run `gh run list --repo GLips/Figma-Context-MCP --limit 1` to confirm the Release workflow triggered.
+   Run `gh run list --repo MiHarsh/figma-local-mcp --limit 1` to confirm the Release workflow triggered.
    Report the workflow run URL so the user can monitor npm publish.

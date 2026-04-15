@@ -1,10 +1,10 @@
-# Figma MCP Server Roadmap
+# figma-local-mcp Roadmap
 
-This roadmap outlines planned improvements and features for the Figma MCP Server project. Items are organized by development phases and effort levels.
+This roadmap outlines planned improvements and features for figma-local-mcp. Items are organized by development phases and effort levels.
 
 ## Overview
 
-The Figma MCP Server enables AI coding assistants to access Figma design data directly, improving the accuracy of design-to-code translations. This roadmap focuses on expanding capabilities, improving developer experience, and ensuring robust enterprise support.
+figma-local-mcp enables AI coding assistants to consume Figma design data from local JSON files. This roadmap focuses on expanding capabilities, improving developer experience, and ensuring robust support.
 
 ## Core Feature Enhancements 🚀
 

@@ -1,6 +1,6 @@
-# Contributing to Framelink MCP for Figma
+# Contributing to figma-local-mcp
 
-Thank you for your interest in contributing to the Framelink MCP for Figma! This guide will help you get started with contributing to this project.
+Thank you for your interest in contributing to figma-local-mcp! This guide will help you get started with contributing to this project.
 
 ## Philosophy
 
@@ -37,8 +37,8 @@ This focused approach ensures:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/GLips/Figma-Context-MCP.git
-   cd Figma-Context-MCP
+   git clone https://github.com/MiHarsh/figma-local-mcp.git
+   cd figma-local-mcp
    ```
 
 2. **Install dependencies:**
@@ -74,11 +74,11 @@ This focused approach ensures:
 
 7. **Test locally:**
 
-   `pnpm dev` will start a local server you can connect to via Streamable HTTP. To connect to it, you can add the following configuration to your MCP JSON config file. Note, some MCP clients use a different format. [See the Framelink docs](https://www.framelink.ai/docs/quickstart#configure-ide) for more information on specific clients.
+   `pnpm dev` will start a local server you can connect to via Streamable HTTP. To connect to it, you can add the following configuration to your MCP JSON config file.
 
    ```bash
    "mcpServers": {
-      "Framelink MCP for Figma - Local StreamableHTTP": {
+      "figma-local-mcp - Local StreamableHTTP": {
          "url": "http://localhost:3333/mcp"
       },
    }
@@ -175,9 +175,7 @@ For reference, these prefixes determine version bumps:
 
 ## Getting Help
 
-- **Documentation**: Check the [Framelink docs](https://framelink.ai/docs)
 - **Issues**: Search existing issues or create a new one
-- **Discord**: Join our [Discord community](https://framelink.ai/discord)
 
 ## License
 

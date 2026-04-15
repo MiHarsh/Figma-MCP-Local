@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.GLips/Figma-Context-MCP",
-  "description": "Give your coding agent access to your Figma data. Implement designs in any framework in one-shot.",
+  "name": "io.github.MiHarsh/figma-local-mcp",
+  "description": "Consume Figma design data from local JSON files — no API key, no rate limits, no internet required.",
   "repository": {
-    "url": "https://github.com/GLips/Figma-Context-MCP",
+    "url": "https://github.com/MiHarsh/figma-local-mcp",
     "source": "github"
   },
-  "version": "0.6.4",
+  "version": "0.1.0",
   "packages": [
     {
       "registryType": "npm",
-      "identifier": "figma-developer-mcp",
-      "version": "0.6.4",
+      "identifier": "figma-local-mcp",
+      "version": "0.1.0",
       "transport": {
         "type": "stdio"
       },
@@ -19,15 +19,6 @@
         {
           "type": "positional",
           "value": "--stdio"
-        }
-      ],
-      "environmentVariables": [
-        {
-          "description": "Your Figma Personal Access Token, learn more here: https://www.figma.com/developers/api#access-tokens",
-          "isRequired": true,
-          "format": "string",
-          "isSecret": true,
-          "name": "FIGMA_API_KEY"
         }
       ]
     }
