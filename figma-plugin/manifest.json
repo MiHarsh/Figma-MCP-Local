@@ -1,6 +1,6 @@
 {
   "name": "Framelink Exporter",
-  "id": "framelink-local-exporter",
+  "id": "1626137893880787983",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",

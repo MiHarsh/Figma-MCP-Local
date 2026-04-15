@@ -108,3 +108,36 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload ${{ needs.release-please.outputs.tag_name }} ${{ matrix.artifact }} --clobber
+
+  # Build Figma plugin and upload as a zip so users can download and
+  # import directly without cloning the repo
+  figma-plugin:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        working-directory: figma-plugin
+        run: npm ci
+
+      - name: Build plugin
+        working-directory: figma-plugin
+        run: npm run build
+
+      - name: Create plugin zip
+        run: |
+          mkdir -p figma-plugin-release
+          cp figma-plugin/manifest.json figma-plugin-release/
+          cp -r figma-plugin/dist figma-plugin-release/
+          cd figma-plugin-release && zip -r ../figma-plugin.zip .
+
+      - name: Upload plugin zip to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload ${{ needs.release-please.outputs.tag_name }} figma-plugin.zip --clobber

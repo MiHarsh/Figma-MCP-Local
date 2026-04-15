@@ -74,7 +74,19 @@ pnpm install
 pnpm build
 ```
 
-### 2. Build the Figma plugin
+### 2. Install the Figma plugin
+
+**Option A: Download pre-built plugin (recommended)**
+
+1. Go to the [latest GitHub Release](https://github.com/MiHarsh/figma-local-mcp/releases/latest)
+2. Download `figma-plugin.zip`
+3. Unzip to any folder
+4. Open the **Figma desktop app**
+5. Go to **Plugins → Development → Import plugin from manifest...**
+6. Select `manifest.json` from the unzipped folder
+7. The plugin appears under **Plugins → Development → Framelink Exporter**
+
+**Option B: Build from source**
 
 ```bash
 cd figma-plugin
@@ -82,14 +94,9 @@ npm install
 npm run build
 ```
 
-### 3. Install the plugin in Figma
+Then import `figma-plugin/manifest.json` in Figma as above.
 
-1. Open the **Figma desktop app**
-2. Go to **Plugins → Development → Import plugin from manifest...**
-3. Select `figma-plugin/manifest.json` from this repo
-4. The plugin appears under **Plugins → Development → Framelink Exporter**
-
-### 4. Export design data
+### 3. Export design data
 
 1. Open any Figma file
 2. Run the plugin: **Plugins → Development → Framelink Exporter**
@@ -97,7 +104,7 @@ npm run build
 4. Click **Export as JSON** — a `.json` file downloads automatically
 5. Place the file in your project (e.g. `designs/` folder)
 
-### 5. Configure MCP in your editor
+### 4. Configure MCP in your editor
 
 Add to your editor's MCP config (`mcp.json`, `.cursor/mcp.json`, etc.):
 
@@ -141,7 +148,7 @@ Add to your editor's MCP config (`mcp.json`, `.cursor/mcp.json`, etc.):
 
 > No `FIGMA_API_KEY` needed. No `env` block needed. No `PORT` needed (stdio mode doesn't use HTTP). Just the path to `dist/bin.js`.
 
-### 6. Use it
+### 5. Use it
 
 Open your editor's agent/chat mode and ask:
 
