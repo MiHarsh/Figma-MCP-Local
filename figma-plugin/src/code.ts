@@ -114,7 +114,45 @@ function renderBoundsFromNode(
   return { x: rb.x, y: rb.y, width: rb.width, height: rb.height };
 }
 
+// ── Yielding & cancellation ──────────────────────────────────────────────────
+
+// Yields control back to Figma's event loop after every node so the app
+// stays responsive (hover, clicks, cancel) during long exports. The Figma
+// plugin sandbox shares the main thread — any synchronous stretch freezes
+// the entire UI.
+let cancelled = false;
+
+class ExportCancelled extends Error {
+  constructor() { super("Export cancelled"); }
+}
+
+function yieldAndCheckCancel(): Promise<void> {
+  return new Promise((resolve, reject) => setTimeout(() => {
+    if (cancelled) reject(new ExportCancelled());
+    else resolve();
+  }, 0));
+}
+
+// ── Node count ───────────────────────────────────────────────────────────────
+
+function countNodes(node: SceneNode, currentDepth: number, maxDepth?: number): number {
+  let count = 1;
+  if ("children" in node) {
+    if (maxDepth !== undefined && currentDepth >= maxDepth) return count;
+    for (const child of (node as FrameNode & { children: readonly SceneNode[] }).children) {
+      count += countNodes(child, currentDepth + 1, maxDepth);
+    }
+  }
+  return count;
+}
+
 // ── Node Serializer ──────────────────────────────────────────────────────────
+
+type ProgressTracker = {
+  callback: (serialized: number, total: number, nodeName: string) => void;
+  serialized: number;
+  total: number;
+};
 
 type SerializedNode = Record<string, unknown>;
 
@@ -126,7 +164,7 @@ type SerializedNode = Record<string, unknown>;
  *  - text (characters, style)
  *  - components (componentProperties, mainComponent reference)
  */
-async function serializeNode(node: SceneNode, currentDepth: number, maxDepth?: number): Promise<SerializedNode> {
+async function serializeNode(node: SceneNode, currentDepth: number, maxDepth?: number, progress?: ProgressTracker): Promise<SerializedNode> {
   const result: SerializedNode = {
     id: node.id,
     name: node.name,
@@ -347,11 +385,18 @@ async function serializeNode(node: SceneNode, currentDepth: number, maxDepth?: n
     } else {
       const childResults: SerializedNode[] = [];
       for (const child of container.children) {
-        childResults.push(await serializeNode(child, currentDepth + 1, maxDepth));
+        childResults.push(await serializeNode(child, currentDepth + 1, maxDepth, progress));
       }
       result.children = childResults;
     }
   }
+
+  if (progress) {
+    progress.serialized++;
+    progress.callback(progress.serialized, progress.total, node.name);
+  }
+
+  await yieldAndCheckCancel();
 
   return result;
 }
@@ -437,8 +482,26 @@ async function collectStyles(): Promise<Record<string, { key: string; name: stri
 
 // ── Export logic ──────────────────────────────────────────────────────────────
 
+function generateDefaultFileName(): string {
+  const safeName = figma.root.name.replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
+  const timestamp = new Date().toISOString().slice(0, 10);
+  return `${safeName}_${timestamp}.json`;
+}
+
 async function exportSelection(nodes: readonly SceneNode[], depth?: number): Promise<string> {
   if (nodes.length === 0) throw new Error("No nodes selected");
+
+  let totalNodes = 0;
+  for (const node of nodes) {
+    totalNodes += countNodes(node, 0, depth);
+  }
+  const progress: ProgressTracker = {
+    callback: (serialized, total, nodeName) => {
+      figma.ui.postMessage({ type: "export-progress", current: serialized, total, nodeName });
+    },
+    serialized: 0,
+    total: totalNodes,
+  };
 
   const components: Record<string, ComponentMeta> = {};
   const componentSets: Record<string, ComponentSetMeta> = {};
@@ -452,7 +515,7 @@ async function exportSelection(nodes: readonly SceneNode[], depth?: number): Pro
   if (nodes.length === 1) {
     // Single node: export as GetFileNodesResponse format
     const node = nodes[0];
-    const serialized = await serializeNode(node, 0, depth);
+    const serialized = await serializeNode(node, 0, depth, progress);
 
     const response = {
       name: figma.root.name,
@@ -474,7 +537,7 @@ async function exportSelection(nodes: readonly SceneNode[], depth?: number): Pro
   const nodesMap: Record<string, unknown> = {};
   for (const node of nodes) {
     nodesMap[node.id] = {
-      document: await serializeNode(node, 0, depth),
+      document: await serializeNode(node, 0, depth, progress),
       components,
       componentSets,
       styles,
@@ -490,6 +553,18 @@ async function exportSelection(nodes: readonly SceneNode[], depth?: number): Pro
 }
 
 async function exportPage(page: PageNode, depth?: number): Promise<string> {
+  let totalNodes = 0;
+  for (const child of page.children) {
+    totalNodes += countNodes(child, 0, depth);
+  }
+  const progress: ProgressTracker = {
+    callback: (serialized, total, nodeName) => {
+      figma.ui.postMessage({ type: "export-progress", current: serialized, total, nodeName });
+    },
+    serialized: 0,
+    total: totalNodes,
+  };
+
   const components: Record<string, ComponentMeta> = {};
   const componentSets: Record<string, ComponentSetMeta> = {};
 
@@ -502,7 +577,7 @@ async function exportPage(page: PageNode, depth?: number): Promise<string> {
   // Export as GetFileResponse format (what the REST API returns for full file fetch)
   const children: SerializedNode[] = [];
   for (const child of page.children) {
-    children.push(await serializeNode(child, 0, depth));
+    children.push(await serializeNode(child, 0, depth, progress));
   }
 
   const response = {
@@ -533,7 +608,7 @@ async function exportPage(page: PageNode, depth?: number): Promise<string> {
 
 // ── Plugin entry point ───────────────────────────────────────────────────────
 
-figma.showUI(__html__, { width: 320, height: 420 });
+figma.showUI(__html__, { width: 360, height: 480 });
 
 function updateSelection() {
   const nodes = figma.currentPage.selection;
@@ -541,6 +616,7 @@ function updateSelection() {
     type: "selection-changed",
     count: nodes.length,
     names: nodes.map((n) => n.name),
+    defaultFileName: generateDefaultFileName(),
   });
 }
 
@@ -550,15 +626,17 @@ updateSelection();
 // React to selection changes
 figma.on("selectionchange", updateSelection);
 
-figma.ui.onmessage = async (msg: { type: string; scope: string; depth?: number }) => {
+figma.ui.onmessage = async (msg: { type: string; scope?: string; depth?: number; fileName?: string }) => {
+  if (msg.type === "cancel-export") {
+    cancelled = true;
+    return;
+  }
+
   if (msg.type !== "export") return;
 
-  try {
-    figma.ui.postMessage({
-      type: "export-progress",
-      message: "Serializing node tree...",
-    });
+  cancelled = false;
 
+  try {
     let data: string;
     let nodeCount: number;
     const depth = msg.depth;
@@ -580,10 +658,7 @@ figma.ui.onmessage = async (msg: { type: string; scope: string; depth?: number }
       nodeCount = selection.length;
     }
 
-    // Sanitize file name from the Figma file name
-    const safeName = figma.root.name.replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
-    const timestamp = new Date().toISOString().slice(0, 10);
-    const fileName = `${safeName}_${timestamp}.json`;
+    const fileName = msg.fileName || generateDefaultFileName();
 
     figma.ui.postMessage({
       type: "export-result",
@@ -593,6 +668,10 @@ figma.ui.onmessage = async (msg: { type: string; scope: string; depth?: number }
       nodeCount,
     });
   } catch (error) {
+    if (error instanceof ExportCancelled) {
+      figma.ui.postMessage({ type: "export-cancelled" });
+      return;
+    }
     figma.ui.postMessage({
       type: "export-result",
       success: false,

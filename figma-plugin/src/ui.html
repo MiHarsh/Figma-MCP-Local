@@ -12,39 +12,50 @@
         font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         font-size: 12px;
         color: #333;
-        padding: 16px;
+        padding: 20px;
         background: #fff;
       }
 
       h2 {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 600;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
+        color: #1a1a1a;
       }
 
       .section {
         margin-bottom: 16px;
       }
 
+      .section-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+      }
+
       label {
         display: flex;
         align-items: center;
         gap: 6px;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         cursor: pointer;
+        font-size: 12px;
       }
 
       .info {
         color: #666;
         font-size: 11px;
-        margin-bottom: 12px;
         line-height: 1.4;
       }
 
       .selection-info {
-        background: #f5f5f5;
-        border-radius: 6px;
-        padding: 10px;
+        background: #f8f8f8;
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        padding: 12px;
         margin-bottom: 16px;
         font-size: 11px;
         line-height: 1.5;
@@ -55,15 +66,30 @@
         color: #18a0fb;
       }
 
+      .filename-input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 12px;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+
+      .filename-input:focus {
+        border-color: #18a0fb;
+      }
+
       button {
         width: 100%;
         padding: 10px 16px;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.15s;
+        transition: all 0.15s;
       }
 
       button.primary {
@@ -76,44 +102,48 @@
       }
 
       button.primary:disabled {
-        background: #ccc;
+        background: #c0c0c0;
         cursor: not-allowed;
       }
 
-      button.secondary {
-        background: #f0f0f0;
-        color: #333;
+      button.cancel {
+        background: none;
+        color: #c53030;
+        font-weight: 500;
         margin-top: 8px;
+        display: none;
       }
 
-      button.secondary:hover {
-        background: #e0e0e0;
+      button.cancel:hover {
+        background: #fde8e8;
       }
 
       .status {
         margin-top: 12px;
-        padding: 8px;
-        border-radius: 4px;
+        padding: 10px 12px;
+        border-radius: 6px;
         font-size: 11px;
         display: none;
+        animation: fadeIn 0.2s ease;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
       }
 
       .status.success {
         display: block;
         background: #e6f9e6;
+        border: 1px solid #c3e6c3;
         color: #1a7a1a;
       }
 
       .status.error {
         display: block;
         background: #fde8e8;
+        border: 1px solid #f5c6c6;
         color: #c53030;
-      }
-
-      .status.working {
-        display: block;
-        background: #e8f0fe;
-        color: #1a56db;
       }
 
       .depth-control {
@@ -138,8 +168,55 @@
 
       .divider {
         height: 1px;
-        background: #e8e8e8;
+        background: #eaeaea;
         margin: 16px 0;
+      }
+
+      .progress-container {
+        margin-top: 12px;
+        display: none;
+      }
+
+      .progress-container.visible {
+        display: block;
+        animation: fadeIn 0.2s ease;
+      }
+
+      .progress-bar-track {
+        width: 100%;
+        height: 4px;
+        background: #e8e8e8;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: #18a0fb;
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.15s ease;
+      }
+
+      .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 6px;
+        font-size: 11px;
+        color: #666;
+      }
+
+      .progress-node {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 220px;
+      }
+
+      .file-size {
+        margin-top: 4px;
+        font-size: 11px;
+        color: #666;
       }
     </style>
   </head>
@@ -151,6 +228,7 @@
     </div>
 
     <div class="section">
+      <div class="section-label">Scope</div>
       <label>
         <input type="radio" name="exportScope" value="selection" checked />
         Export selected nodes
@@ -172,26 +250,76 @@
       </div>
     </div>
 
+    <div class="section">
+      <div class="section-label">Filename</div>
+      <input type="text" class="filename-input" id="filenameInput" value="" placeholder="export.json" />
+    </div>
+
     <div class="divider"></div>
 
     <button class="primary" id="exportBtn" disabled>Export as JSON</button>
-    <button class="secondary" id="exportPageBtn">Export Current Page</button>
+    <button class="cancel" id="cancelBtn">Cancel</button>
+
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressBarFill"></div>
+      </div>
+      <div class="progress-info">
+        <span class="progress-node" id="progressNode"></span>
+        <span id="progressPercent">0%</span>
+      </div>
+    </div>
 
     <div class="status" id="status"></div>
 
     <script>
       const exportBtn = document.getElementById("exportBtn");
-      const exportPageBtn = document.getElementById("exportPageBtn");
+      const cancelBtn = document.getElementById("cancelBtn");
       const statusEl = document.getElementById("status");
       const selectionInfo = document.getElementById("selectionInfo");
       const limitDepthCheck = document.getElementById("limitDepth");
       const depthInput = document.getElementById("depthValue");
+      const filenameInput = document.getElementById("filenameInput");
+      const progressContainer = document.getElementById("progressContainer");
+      const progressBarFill = document.getElementById("progressBarFill");
+      const progressNode = document.getElementById("progressNode");
+      const progressPercent = document.getElementById("progressPercent");
+
+      let isExporting = false;
 
       limitDepthCheck.addEventListener("change", () => {
         depthInput.disabled = !limitDepthCheck.checked;
       });
 
-      // Update selection info from plugin
+      function formatBytes(bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+      }
+
+      function getScope() {
+        return document.querySelector('input[name="exportScope"]:checked').value;
+      }
+
+      function updateExportButton() {
+        const scope = getScope();
+        if (isExporting) {
+          exportBtn.disabled = true;
+          exportBtn.textContent = "Exporting\u2026";
+          cancelBtn.style.display = "block";
+        } else {
+          const hasSelection = selectionInfo.querySelector(".count") !== null;
+          exportBtn.disabled = scope === "selection" && !hasSelection;
+          exportBtn.textContent = "Export as JSON";
+          cancelBtn.style.display = "none";
+        }
+      }
+
+      // Update button state when scope changes
+      document.querySelectorAll('input[name="exportScope"]').forEach((radio) => {
+        radio.addEventListener("change", updateExportButton);
+      });
+
       window.onmessage = (event) => {
         const msg = event.data.pluginMessage;
         if (!msg) return;
@@ -200,16 +328,21 @@
           const count = msg.count;
           if (count === 0) {
             selectionInfo.innerHTML = "<div>Select nodes in Figma to export.</div>";
-            exportBtn.disabled = true;
           } else {
-            selectionInfo.innerHTML = `<div><span class="count">${count}</span> node${count > 1 ? "s" : ""} selected</div><div>${msg.names.slice(0, 5).join(", ")}${count > 5 ? "..." : ""}</div>`;
-            exportBtn.disabled = false;
+            selectionInfo.innerHTML = `<div><span class="count">${count}</span> node${count > 1 ? "s" : ""} selected</div><div>${msg.names.slice(0, 5).join(", ")}${count > 5 ? "\u2026" : ""}</div>`;
           }
+          if (msg.defaultFileName) {
+            filenameInput.value = msg.defaultFileName;
+          }
+          updateExportButton();
         }
 
         if (msg.type === "export-result") {
+          isExporting = false;
+          updateExportButton();
+          progressContainer.classList.remove("visible");
+
           if (msg.success) {
-            // Trigger download in the UI iframe
             const blob = new Blob([msg.data], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -218,42 +351,64 @@
             a.click();
             URL.revokeObjectURL(url);
 
+            const fileSize = new Blob([msg.data]).size;
             statusEl.className = "status success";
-            statusEl.textContent = `Exported ${msg.nodeCount} nodes to ${msg.fileName}`;
+            statusEl.innerHTML = `Exported ${msg.nodeCount} nodes to ${msg.fileName}<div class="file-size">${formatBytes(fileSize)}</div>`;
           } else {
             statusEl.className = "status error";
             statusEl.textContent = `Error: ${msg.error}`;
           }
         }
 
+        if (msg.type === "export-cancelled") {
+          isExporting = false;
+          updateExportButton();
+          progressContainer.classList.remove("visible");
+          statusEl.className = "status error";
+          statusEl.textContent = "Export cancelled.";
+        }
+
         if (msg.type === "export-progress") {
-          statusEl.className = "status working";
-          statusEl.textContent = msg.message;
+          progressContainer.classList.add("visible");
+          if (msg.current !== undefined && msg.total) {
+            const pct = Math.round((msg.current / msg.total) * 100);
+            progressBarFill.style.width = pct + "%";
+            progressPercent.textContent = pct + "%";
+            progressNode.textContent = msg.nodeName || "";
+          }
         }
       };
 
-      function getOptions() {
-        const scope = document.querySelector('input[name="exportScope"]:checked').value;
-        const depth = limitDepthCheck.checked ? parseInt(depthInput.value) : undefined;
-        return { scope, depth };
-      }
-
       exportBtn.addEventListener("click", () => {
-        const { depth } = getOptions();
-        statusEl.className = "status working";
-        statusEl.textContent = "Exporting selected nodes...";
+        if (isExporting) return;
+        const scope = getScope();
+        const depth = limitDepthCheck.checked ? parseInt(depthInput.value) : undefined;
+        const fileName = filenameInput.value.trim() || undefined;
+
+        isExporting = true;
+        updateExportButton();
+        statusEl.className = "status";
+        statusEl.style.display = "none";
+        progressBarFill.style.width = "0%";
+        progressPercent.textContent = "0%";
+        progressNode.textContent = "";
+        progressContainer.classList.add("visible");
+
         parent.postMessage(
-          { pluginMessage: { type: "export", scope: "selection", depth } },
+          { pluginMessage: { type: "export", scope, depth, fileName } },
           "*",
         );
       });
+      cancelBtn.addEventListener("click", () => {
+        // Reset UI immediately — don't wait for code.ts to confirm
+        isExporting = false;
+        updateExportButton();
+        progressContainer.classList.remove("visible");
+        statusEl.className = "status error";
+        statusEl.textContent = "Export cancelled.";
 
-      exportPageBtn.addEventListener("click", () => {
-        const { depth } = getOptions();
-        statusEl.className = "status working";
-        statusEl.textContent = "Exporting current page...";
         parent.postMessage(
-          { pluginMessage: { type: "export", scope: "page", depth } },
+          { pluginMessage: { type: "cancel-export" } },
           "*",
         );
       });
