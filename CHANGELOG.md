@@ -1,5 +1,12 @@
 # figma-local-mcp
 
+## [0.4.0](https://github.com/MiHarsh/Figma-local-MCP/compare/v0.3.1...v0.4.0) (2026-05-16)
+
+
+### Features
+
+* bundle assets in plugin export to improve code generation ([a79cb88](https://github.com/MiHarsh/Figma-local-MCP/commit/a79cb8862d91f08e7bd9642034acf9f33ed00d69))
+
 ## [0.3.1](https://github.com/MiHarsh/Figma-local-MCP/compare/v0.3.0...v0.3.1) (2026-04-15)
 
 

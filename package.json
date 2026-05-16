@@ -1,6 +1,6 @@
 {
   "name": "figma-local-mcp",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "mcpName": "io.github.MiHarsh/figma-local-mcp",
   "description": "MCP server for AI coding agents that consumes Figma designs offline — no API key, no rate limits. Ships with a companion Figma plugin that bundles design JSON + PNG screenshots + SVG icons + image-fill bytes into a single ZIP; the server surfaces per-node imagePath/svgPath, semantic roles (button/textbox/dropdown/…), and an imperative REQUIRED_NEXT_ACTIONS checklist so agents generate pixel-accurate, semantic markup.",
   "type": "module",
