@@ -1,9 +1,12 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Logger } from "../utils/logger.js";
 import type { ToolExtra } from "./progress.js";
 import {
   getFigmaDataFromJsonTool,
+  getNodeImageTool,
+  getNodeSvgTool,
   type GetFigmaDataFromJsonParams,
+  type GetNodeImageParams,
+  type GetNodeSvgParams,
 } from "./tools/index.js";
 
 const serverInfo = {
@@ -30,6 +33,28 @@ function createServer({ outputFormat = "yaml" }: CreateServerOptions = {}) {
     },
     (params: GetFigmaDataFromJsonParams, extra: ToolExtra) =>
       getFigmaDataFromJsonTool.handler(params, outputFormat, extra),
+  );
+
+  server.registerTool(
+    getNodeImageTool.name,
+    {
+      title: "Get Node Image",
+      description: getNodeImageTool.description,
+      inputSchema: getNodeImageTool.parametersSchema,
+      annotations: { readOnlyHint: true },
+    },
+    (params: GetNodeImageParams, extra: ToolExtra) => getNodeImageTool.handler(params, extra),
+  );
+
+  server.registerTool(
+    getNodeSvgTool.name,
+    {
+      title: "Get Node SVG",
+      description: getNodeSvgTool.description,
+      inputSchema: getNodeSvgTool.parametersSchema,
+      annotations: { readOnlyHint: true },
+    },
+    (params: GetNodeSvgParams, extra: ToolExtra) => getNodeSvgTool.handler(params, extra),
   );
 
   return server;

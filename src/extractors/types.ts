@@ -118,6 +118,29 @@ export interface SimplifiedNode {
   componentId?: string;
   componentProperties?: Record<string, boolean | string>;
   componentPropertyReferences?: Record<string, string>;
+  // Resolved component context — populated post-extraction by the JSON tool's
+  // enrichment pass so agents don't have to cross-reference the components map.
+  componentName?: string;
+  componentDescription?: string;
+  /**
+   * Heuristic mapping of the underlying component to a familiar UI primitive
+   * (button, textbox, dropdown, checkbox, icon, …). Derived from the component
+   * name; meant as a strong hint, not a contract. When present the agent should
+   * generate the corresponding semantic element rather than a generic <div>.
+   */
+  semanticRole?: string;
+  // visual references — populated from the plugin's framelinkExport.assets manifest.
+  // Paths are relative to the JSON file's directory; agents should call
+  // get_node_image / get_node_svg with the node id to retrieve actual bytes.
+  imagePath?: string;
+  imageScale?: number;
+  svgPath?: string;
+  /**
+   * Imperative directive surfaced to the agent when the node has a high-fidelity
+   * asset available. Tells the agent which follow-up tool to call so it doesn't
+   * try to reconstruct the visual from primitive geometry.
+   */
+  renderHint?: string;
   // children
   children?: SimplifiedNode[];
 }

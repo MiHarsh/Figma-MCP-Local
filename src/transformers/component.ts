@@ -9,6 +9,12 @@ export interface SimplifiedComponentDefinition {
   id: string;
   key: string;
   name: string;
+  /**
+   * Designer-authored description from the Figma component panel. Surfaced so
+   * downstream consumers (e.g. the JSON tool's enrichment pass) can pass it
+   * through to instances as `componentDescription` for the agent's benefit.
+   */
+  description?: string;
   componentSetId?: string;
   propertyDefinitions?: Record<string, SimplifiedPropertyDefinition>;
 }
@@ -100,6 +106,10 @@ export function simplifyComponents(
         key: comp.key,
         name: comp.name,
         componentSetId: comp.componentSetId,
+        // Preserved verbatim so the JSON tool can stamp it onto INSTANCE nodes
+        // as `componentDescription`. Empty descriptions are filtered out by
+        // the consumer to keep the simplified output tidy.
+        ...(comp.description ? { description: comp.description } : {}),
         ...(propertyDefinitions?.[id] && {
           propertyDefinitions: propertyDefinitions[id],
         }),

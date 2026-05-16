@@ -48,6 +48,15 @@ export type SimplifiedImageFill = {
   isBackground?: boolean;
   objectFit?: string;
 
+  /**
+   * When the source JSON was produced by the Framelink plugin with image-fill
+   * export enabled, this is the relative path to the actual image bytes on disk
+   * (e.g. "design.assets/image_<hash>.png"). Set during the JSON tool's
+   * enrichment pass — agents should reference this file directly instead of
+   * trying to render the imageRef as a placeholder.
+   */
+  assetPath?: string;
+
   // Image processing metadata (NOT for CSS translation)
   // Used by download tools to determine post-processing needs
   imageDownloadArguments?: {

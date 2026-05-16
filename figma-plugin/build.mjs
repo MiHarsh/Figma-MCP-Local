@@ -5,11 +5,15 @@ import path from "path";
 const watch = process.argv.includes("--watch");
 
 // Build the plugin code (sandbox)
+// target=es2017: Figma's plugin sandbox doesn't reliably support object
+// rest/spread (ES2018). esbuild down-levels {...x} → Object.assign({}, x)
+// when targeting es2017. Bumping back to es2018 will reproduce a runtime
+// "Unexpected token ..." in the Figma sandbox.
 const codeBuild = {
   entryPoints: ["src/code.ts"],
   bundle: true,
   outfile: "dist/code.js",
-  target: "es2018",
+  target: "es2017",
   format: "iife",
 };
 

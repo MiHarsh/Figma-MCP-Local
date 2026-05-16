@@ -2,7 +2,7 @@
   "name": "figma-local-mcp",
   "version": "0.3.1",
   "mcpName": "io.github.MiHarsh/figma-local-mcp",
-  "description": "Consume Figma design data from local JSON files — no API key, no rate limits, no internet required. Built on Framelink's extractor pipeline.",
+  "description": "MCP server for AI coding agents that consumes Figma designs offline — no API key, no rate limits. Ships with a companion Figma plugin that bundles design JSON + PNG screenshots + SVG icons + image-fill bytes into a single ZIP; the server surfaces per-node imagePath/svgPath, semantic roles (button/textbox/dropdown/…), and an imperative REQUIRED_NEXT_ACTIONS checklist so agents generate pixel-accurate, semantic markup.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -49,7 +49,16 @@
     "offline",
     "design",
     "typescript",
-    "framelink"
+    "framelink",
+    "ai",
+    "agent",
+    "claude",
+    "cursor",
+    "copilot",
+    "design-to-code",
+    "figma-plugin",
+    "vision",
+    "multimodal"
   ],
   "author": "MiHarsh",
   "license": "MIT",

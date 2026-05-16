@@ -2,30 +2,24 @@
 <html>
   <head>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
 
       body {
         font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         font-size: 12px;
         color: #333;
-        padding: 20px;
+        padding: 12px 15px;
         background: #fff;
       }
 
       h2 {
         font-size: 15px;
         font-weight: 600;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
         color: #1a1a1a;
       }
 
-      .section {
-        margin-bottom: 16px;
-      }
+      .section { margin-bottom: 14px; }
 
       .section-label {
         font-size: 11px;
@@ -33,42 +27,35 @@
         color: #888;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
       }
 
       label {
         display: flex;
         align-items: center;
         gap: 6px;
-        margin-bottom: 6px;
+        margin-bottom: 5px;
         cursor: pointer;
         font-size: 12px;
       }
 
-      .info {
-        color: #666;
-        font-size: 11px;
-        line-height: 1.4;
-      }
+      .info { color: #666; font-size: 11px; line-height: 1.4; }
 
       .selection-info {
         background: #f8f8f8;
         border: 1px solid #e8e8e8;
         border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 16px;
+        padding: 10px 12px;
+        margin-bottom: 14px;
         font-size: 11px;
         line-height: 1.5;
       }
 
-      .selection-info .count {
-        font-weight: 600;
-        color: #18a0fb;
-      }
+      .selection-info .count { font-weight: 600; color: #18a0fb; }
 
       .filename-input {
         width: 100%;
-        padding: 8px 10px;
+        padding: 7px 10px;
         border: 1px solid #ddd;
         border-radius: 6px;
         font-size: 12px;
@@ -76,10 +63,7 @@
         outline: none;
         transition: border-color 0.15s;
       }
-
-      .filename-input:focus {
-        border-color: #18a0fb;
-      }
+      .filename-input:focus { border-color: #18a0fb; }
 
       button {
         width: 100%;
@@ -91,46 +75,45 @@
         cursor: pointer;
         transition: all 0.15s;
       }
-
-      button.primary {
-        background: #18a0fb;
-        color: #fff;
+      /*
+       * Export and Cancel share a single grid cell so they swap in place
+       * without growing the body. Both buttons fill the same slot; visibility
+       * (not display) controls which one is interactive. Layout never shifts
+       * — no scroll flash when exporting starts or completes.
+       */
+      .action-slot {
+        display: grid;
+        grid-template-areas: "slot";
+      }
+      .action-slot > button {
+        grid-area: slot;
       }
 
-      button.primary:hover {
-        background: #0d8de5;
-      }
-
-      button.primary:disabled {
-        background: #c0c0c0;
-        cursor: not-allowed;
-      }
+      button.primary { background: #18a0fb; color: #fff; }
+      button.primary:hover { background: #0d8de5; }
+      button.primary:disabled { background: #c0c0c0; cursor: not-allowed; }
+      button.primary.hidden { visibility: hidden; pointer-events: none; }
 
       button.cancel {
-        background: none;
-        color: #c53030;
-        font-weight: 500;
-        margin-top: 8px;
-        display: none;
-      }
-
-      button.cancel:hover {
         background: #fde8e8;
+        color: #c53030;
+        border: 1px solid #f5c6c6;
+        font-weight: 600;
+        visibility: hidden;
+        pointer-events: none;
       }
+      button.cancel.visible { visibility: visible; pointer-events: auto; }
+      button.cancel:hover { background: #fad4d4; }
 
       .status {
-        margin-top: 12px;
-        padding: 10px 12px;
+        margin-top: 10px;
+        padding: 9px 12px;
         border-radius: 6px;
         font-size: 11px;
         display: none;
         animation: fadeIn 0.2s ease;
       }
-
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-4px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
       .status.success {
         display: block;
@@ -138,7 +121,6 @@
         border: 1px solid #c3e6c3;
         color: #1a7a1a;
       }
-
       .status.error {
         display: block;
         background: #fde8e8;
@@ -150,9 +132,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-bottom: 8px;
       }
-
       .depth-control input[type="number"] {
         width: 60px;
         padding: 4px 6px;
@@ -160,27 +140,22 @@
         border-radius: 4px;
         font-size: 12px;
       }
+      .depth-control input[type="number"]:disabled { background: #f5f5f5; color: #999; }
 
-      .depth-control input[type="number"]:disabled {
-        background: #f5f5f5;
-        color: #999;
-      }
+      .divider { height: 1px; background: #eaeaea; margin: 14px 0; }
 
-      .divider {
-        height: 1px;
-        background: #eaeaea;
-        margin: 16px 0;
-      }
-
+      /*
+       * The progress container reserves its layout space from the start via
+       * visibility:hidden — toggling display:none↔block as the export starts
+       * caused a one-frame scroll flash while figma.ui.resize() catches up.
+       * Reserving the space upfront keeps the body height constant; only the
+       * paint state changes when progress becomes visible.
+       */
       .progress-container {
-        margin-top: 12px;
-        display: none;
+        margin-top: 10px;
+        visibility: hidden;
       }
-
-      .progress-container.visible {
-        display: block;
-        animation: fadeIn 0.2s ease;
-      }
+      .progress-container.visible { visibility: visible; animation: fadeIn 0.2s ease; }
 
       .progress-bar-track {
         width: 100%;
@@ -189,7 +164,6 @@
         border-radius: 2px;
         overflow: hidden;
       }
-
       .progress-bar-fill {
         height: 100%;
         background: #18a0fb;
@@ -205,7 +179,6 @@
         font-size: 11px;
         color: #666;
       }
-
       .progress-node {
         overflow: hidden;
         text-overflow: ellipsis;
@@ -213,11 +186,34 @@
         max-width: 220px;
       }
 
-      .file-size {
-        margin-top: 4px;
+      .file-size { margin-top: 4px; font-size: 11px; color: #666; }
+
+      .help-footer {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid #eaeaea;
+        display: flex;
+        align-items: center;
+        gap: 6px;
         font-size: 11px;
         color: #666;
+        justify-content: center;
       }
+      .help-link {
+        color: #18a0fb;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: none;
+        border: none;
+        padding: 0;
+        font: inherit;
+        width: fit-content;
+      }
+      .help-link:hover { text-decoration: underline; }
+      .help-link svg { flex-shrink: 0; }
     </style>
   </head>
   <body>
@@ -229,36 +225,42 @@
 
     <div class="section">
       <div class="section-label">Scope</div>
-      <label>
-        <input type="radio" name="exportScope" value="selection" checked />
-        Export selected nodes
-      </label>
-      <label>
-        <input type="radio" name="exportScope" value="page" />
-        Export current page
-      </label>
+      <label><input type="radio" name="exportScope" value="selection" checked /> Export selected nodes</label>
+      <label><input type="radio" name="exportScope" value="page" /> Export current page</label>
     </div>
 
     <div class="section">
-      <label>
-        <input type="checkbox" id="limitDepth" />
-        Limit traversal depth
-      </label>
+      <div class="section-label">Assets</div>
+      <label><input type="checkbox" id="exportFrameImages" checked /> Render selected frames as PNG (@2x)</label>
+      <label><input type="checkbox" id="exportSvgs" checked /> Export icon subtrees as SVG</label>
+      <label><input type="checkbox" id="exportImageFills" checked /> Include image-fill bytes</label>
+      <div class="info" style="margin-top: 4px;">
+        Assets are saved to <code>&lt;filename&gt;.assets/</code>. Disable to export JSON only.
+      </div>
+    </div>
+
+    <div class="section">
+      <label><input type="checkbox" id="limitDepth" /> Limit traversal depth</label>
       <div class="depth-control">
         <input type="number" id="depthValue" min="1" max="50" value="10" disabled />
-        <span class="info" style="margin: 0">levels deep</span>
+        <span class="info">levels deep</span>
       </div>
     </div>
 
     <div class="section">
       <div class="section-label">Filename</div>
-      <input type="text" class="filename-input" id="filenameInput" value="" placeholder="export.json" />
+      <input type="text" class="filename-input" id="filenameInput" value="" placeholder="my-design" />
+      <div class="info" style="margin-top: 4px;">
+        Extension is added automatically.
+      </div>
     </div>
 
     <div class="divider"></div>
 
-    <button class="primary" id="exportBtn" disabled>Export as JSON</button>
-    <button class="cancel" id="cancelBtn">Cancel</button>
+    <div class="action-slot">
+      <button class="primary" id="exportBtn" disabled>Export</button>
+      <button class="cancel" id="cancelBtn">Cancel export</button>
+    </div>
 
     <div class="progress-container" id="progressContainer">
       <div class="progress-bar-track">
@@ -272,7 +274,137 @@
 
     <div class="status" id="status"></div>
 
+    <div class="help-footer">
+      <span>Need help?</span>
+      <button type="button" class="help-link" id="openReadme" title="Open README on GitHub">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.39 0-.19-.01-.7-.01-1.37-2.22.48-2.69-.94-2.69-.94-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.81.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.13 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.11.16 1.93.08 2.13.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8 8 0 0 0 8 0z"/></svg>
+        README
+      </button>
+    </div>
+
     <script>
+      // ── Minimal ZIP-STORE writer ────────────────────────────────────────────
+      // ZIP STORE (no compression) is fine here: PNGs are already DEFLATE-compressed
+      // internally and SVGs are tiny. Avoiding a compression dep keeps the plugin
+      // bundle small and the build configuration trivial.
+
+      // CRC32 table — computed once, reused for every entry.
+      const CRC32_TABLE = (() => {
+        const table = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+          let c = n;
+          for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+          table[n] = c >>> 0;
+        }
+        return table;
+      })();
+
+      function crc32(buf) {
+        let c = 0xffffffff;
+        for (let i = 0; i < buf.length; i++) c = CRC32_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+        return (c ^ 0xffffffff) >>> 0;
+      }
+
+      function utf8(s) { return new TextEncoder().encode(s); }
+
+      function dosTime(d) {
+        return ((d.getHours() & 0x1f) << 11) | ((d.getMinutes() & 0x3f) << 5) | ((d.getSeconds() / 2) & 0x1f);
+      }
+      function dosDate(d) {
+        return (((d.getFullYear() - 1980) & 0x7f) << 9) | (((d.getMonth() + 1) & 0xf) << 5) | (d.getDate() & 0x1f);
+      }
+
+      /**
+       * Build a ZIP file (STORE method) from {path, bytes} entries.
+       * Layout: [local file header + data]* + [central directory record]* + [end-of-central-directory]
+       * Spec: APPNOTE.TXT v6.3.10 §4.3
+       */
+      function buildZip(entries) {
+        const now = new Date();
+        const time = dosTime(now);
+        const date = dosDate(now);
+
+        const localParts = [];
+        const centralParts = [];
+        let offset = 0;
+
+        for (const entry of entries) {
+          const nameBytes = utf8(entry.path);
+          const data = entry.bytes;
+          const crc = crc32(data);
+          const size = data.length;
+
+          // Local file header (30 bytes + name)
+          const localHeader = new Uint8Array(30 + nameBytes.length);
+          const lh = new DataView(localHeader.buffer);
+          lh.setUint32(0, 0x04034b50, true);   // signature
+          lh.setUint16(4, 20, true);            // version needed
+          lh.setUint16(6, 0x0800, true);        // general purpose: UTF-8 filename
+          lh.setUint16(8, 0, true);             // method: 0 = STORE
+          lh.setUint16(10, time, true);
+          lh.setUint16(12, date, true);
+          lh.setUint32(14, crc, true);
+          lh.setUint32(18, size, true);         // compressed size
+          lh.setUint32(22, size, true);         // uncompressed size
+          lh.setUint16(26, nameBytes.length, true);
+          lh.setUint16(28, 0, true);            // extra field length
+          localHeader.set(nameBytes, 30);
+
+          localParts.push(localHeader, data);
+
+          // Central directory entry (46 bytes + name)
+          const central = new Uint8Array(46 + nameBytes.length);
+          const cd = new DataView(central.buffer);
+          cd.setUint32(0, 0x02014b50, true);    // signature
+          cd.setUint16(4, 20, true);            // version made by
+          cd.setUint16(6, 20, true);            // version needed
+          cd.setUint16(8, 0x0800, true);
+          cd.setUint16(10, 0, true);
+          cd.setUint16(12, time, true);
+          cd.setUint16(14, date, true);
+          cd.setUint32(16, crc, true);
+          cd.setUint32(20, size, true);
+          cd.setUint32(24, size, true);
+          cd.setUint16(28, nameBytes.length, true);
+          cd.setUint16(30, 0, true);            // extra field length
+          cd.setUint16(32, 0, true);            // comment length
+          cd.setUint16(34, 0, true);            // disk number
+          cd.setUint16(36, 0, true);            // internal attrs
+          cd.setUint32(38, 0, true);            // external attrs
+          cd.setUint32(42, offset, true);       // local header offset
+          central.set(nameBytes, 46);
+
+          centralParts.push(central);
+
+          offset += localHeader.length + data.length;
+        }
+
+        const centralStart = offset;
+        const centralSize = centralParts.reduce((acc, p) => acc + p.length, 0);
+
+        // End of central directory record
+        const eocd = new Uint8Array(22);
+        const ev = new DataView(eocd.buffer);
+        ev.setUint32(0, 0x06054b50, true);
+        ev.setUint16(4, 0, true);
+        ev.setUint16(6, 0, true);
+        ev.setUint16(8, entries.length, true);
+        ev.setUint16(10, entries.length, true);
+        ev.setUint32(12, centralSize, true);
+        ev.setUint32(16, centralStart, true);
+        ev.setUint16(20, 0, true);
+
+        const total = offset + centralSize + eocd.length;
+        const out = new Uint8Array(total);
+        let p = 0;
+        for (const part of localParts) { out.set(part, p); p += part.length; }
+        for (const part of centralParts) { out.set(part, p); p += part.length; }
+        out.set(eocd, p);
+        return out;
+      }
+
+      // ── DOM refs ────────────────────────────────────────────────────────────
+
       const exportBtn = document.getElementById("exportBtn");
       const cancelBtn = document.getElementById("cancelBtn");
       const statusEl = document.getElementById("status");
@@ -284,6 +416,9 @@
       const progressBarFill = document.getElementById("progressBarFill");
       const progressNode = document.getElementById("progressNode");
       const progressPercent = document.getElementById("progressPercent");
+      const exportFrameImages = document.getElementById("exportFrameImages");
+      const exportSvgs = document.getElementById("exportSvgs");
+      const exportImageFills = document.getElementById("exportImageFills");
 
       let isExporting = false;
 
@@ -304,21 +439,37 @@
       function updateExportButton() {
         const scope = getScope();
         if (isExporting) {
+          // Hide Export, show Cancel — both occupy the same grid cell so the
+          // swap happens with zero layout shift.
+          exportBtn.classList.add("hidden");
           exportBtn.disabled = true;
-          exportBtn.textContent = "Exporting\u2026";
-          cancelBtn.style.display = "block";
-        } else {
-          const hasSelection = selectionInfo.querySelector(".count") !== null;
-          exportBtn.disabled = scope === "selection" && !hasSelection;
-          exportBtn.textContent = "Export as JSON";
-          cancelBtn.style.display = "none";
+          cancelBtn.classList.add("visible");
+          return;
         }
+        exportBtn.classList.remove("hidden");
+        cancelBtn.classList.remove("visible");
+        const hasSelection = selectionInfo.querySelector(".count") !== null;
+        exportBtn.disabled = scope === "selection" && !hasSelection;
+        const anyAssets = exportFrameImages.checked || exportSvgs.checked || exportImageFills.checked;
+        exportBtn.textContent = anyAssets ? "Export as ZIP" : "Export JSON";
       }
 
-      // Update button state when scope changes
       document.querySelectorAll('input[name="exportScope"]').forEach((radio) => {
         radio.addEventListener("change", updateExportButton);
       });
+      [exportFrameImages, exportSvgs, exportImageFills].forEach((cb) =>
+        cb.addEventListener("change", updateExportButton),
+      );
+
+      function downloadBlob(bytes, mime, filename) {
+        const blob = new Blob([bytes], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
 
       window.onmessage = (event) => {
         const msg = event.data.pluginMessage;
@@ -331,7 +482,7 @@
           } else {
             selectionInfo.innerHTML = `<div><span class="count">${count}</span> node${count > 1 ? "s" : ""} selected</div><div>${msg.names.slice(0, 5).join(", ")}${count > 5 ? "\u2026" : ""}</div>`;
           }
-          if (msg.defaultFileName) {
+          if (msg.defaultFileName && !filenameInput.value) {
             filenameInput.value = msg.defaultFileName;
           }
           updateExportButton();
@@ -342,21 +493,62 @@
           updateExportButton();
           progressContainer.classList.remove("visible");
 
-          if (msg.success) {
-            const blob = new Blob([msg.data], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = msg.fileName;
-            a.click();
-            URL.revokeObjectURL(url);
-
-            const fileSize = new Blob([msg.data]).size;
-            statusEl.className = "status success";
-            statusEl.innerHTML = `Exported ${msg.nodeCount} nodes to ${msg.fileName}<div class="file-size">${formatBytes(fileSize)}</div>`;
-          } else {
+          if (!msg.success) {
             statusEl.className = "status error";
             statusEl.textContent = `Error: ${msg.error}`;
+            return;
+          }
+
+          try {
+            const jsonBytes = utf8(msg.json);
+            // The plugin sends a stem only — the UI is the single source of
+            // truth for which extension to write (.zip vs .json) since it knows
+            // whether assets were bundled.
+            const baseName = msg.fileName.replace(/\.(json|zip)$/i, "");
+            const jsonInZipPath = `${baseName}.json`;
+            let summary = "";
+
+            if (msg.assets && msg.assets.length > 0) {
+              // Bundle JSON + assets into a single ZIP for atomic download.
+              const entries = [{ path: jsonInZipPath, bytes: jsonBytes }];
+              for (const asset of msg.assets) {
+                entries.push({
+                  path: `${msg.assetsFolder}/${asset.path}`,
+                  // Asset bytes arrive as Uint8Array via structured clone
+                  bytes: asset.bytes instanceof Uint8Array ? asset.bytes : new Uint8Array(asset.bytes),
+                });
+              }
+              const zip = buildZip(entries);
+              const zipName = `${baseName}.zip`;
+              downloadBlob(zip, "application/zip", zipName);
+
+              statusEl.className = "status success";
+              statusEl.innerHTML =
+                `Exported ${msg.nodeCount} root node${msg.nodeCount === 1 ? "" : "s"} + ${msg.assets.length} asset${msg.assets.length === 1 ? "" : "s"} to ${zipName}` +
+                `<div class="file-size">${formatBytes(zip.length)} (zip) — unzip into your repo, then point the MCP tool at <code>${jsonInZipPath}</code></div>`;
+              summary = `Exported ${zipName} (${formatBytes(zip.length)})`;
+            } else {
+              const jsonName = `${baseName}.json`;
+              downloadBlob(jsonBytes, "application/json", jsonName);
+              statusEl.className = "status success";
+              statusEl.innerHTML =
+                `Exported ${msg.nodeCount} node${msg.nodeCount === 1 ? "" : "s"} to ${jsonName}` +
+                `<div class="file-size">${formatBytes(jsonBytes.length)}</div>`;
+              summary = `Exported ${jsonName} (${formatBytes(jsonBytes.length)})`;
+            }
+
+            // Give the browser a beat to flush the download dialog before the
+            // sandbox tears down the iframe — otherwise some Chromium builds
+            // cancel the download mid-flight when the plugin closes.
+            setTimeout(() => {
+              parent.postMessage(
+                { pluginMessage: { type: "download-complete", notify: summary } },
+                "*",
+              );
+            }, 400);
+          } catch (e) {
+            statusEl.className = "status error";
+            statusEl.textContent = `Failed to package: ${e.message || e}`;
           }
         }
 
@@ -377,12 +569,18 @@
             progressNode.textContent = msg.nodeName || "";
           }
         }
+
+        if (msg.type === "export-progress-asset") {
+          progressContainer.classList.add("visible");
+          progressNode.textContent = msg.label || "";
+          progressPercent.textContent = "assets";
+        }
       };
 
       exportBtn.addEventListener("click", () => {
         if (isExporting) return;
         const scope = getScope();
-        const depth = limitDepthCheck.checked ? parseInt(depthInput.value) : undefined;
+        const depth = limitDepthCheck.checked ? parseInt(depthInput.value, 10) : undefined;
         const fileName = filenameInput.value.trim() || undefined;
 
         isExporting = true;
@@ -395,23 +593,81 @@
         progressContainer.classList.add("visible");
 
         parent.postMessage(
-          { pluginMessage: { type: "export", scope, depth, fileName } },
+          {
+            pluginMessage: {
+              type: "export",
+              scope,
+              depth,
+              fileName,
+              exportFrameImages: exportFrameImages.checked,
+              exportSvgs: exportSvgs.checked,
+              exportImageFills: exportImageFills.checked,
+            },
+          },
           "*",
         );
       });
-      cancelBtn.addEventListener("click", () => {
-        // Reset UI immediately — don't wait for code.ts to confirm
-        isExporting = false;
-        updateExportButton();
-        progressContainer.classList.remove("visible");
-        statusEl.className = "status error";
-        statusEl.textContent = "Export cancelled.";
 
-        parent.postMessage(
-          { pluginMessage: { type: "cancel-export" } },
-          "*",
-        );
+      cancelBtn.addEventListener("click", () => {
+        if (!isExporting) return;
+        parent.postMessage({ pluginMessage: { type: "cancel-export" } }, "*");
       });
+
+      // External links: forward to the sandbox so it can call figma.openExternal.
+      // Direct <a target="_blank"> is blocked by the plugin iframe sandbox.
+      function openUrl(url) {
+        parent.postMessage({ pluginMessage: { type: "open-url", url } }, "*");
+      }
+      document
+        .getElementById("openReadme")
+        .addEventListener("click", () =>
+          openUrl("https://github.com/MiHarsh/figma-local-mcp#readme"),
+        );
+
+      // ── Auto-resize the iframe to its content ───────────────────────────────
+      // Figma hard-sizes the plugin window to whatever showUI() requested, so
+      // a fixed height leaves a strip of empty space below the footer (or cuts
+      // off content when status text wraps / progress bar appears).
+      // We measure the body's full layout box (scrollHeight INSIDE + body's own
+      // top/bottom padding which scrollHeight ignores) and report on every DOM
+      // mutation, not just box-size changes — display:none → display:block
+      // transitions sometimes don't trigger ResizeObserver until paint settles.
+      const BODY_PADDING_VERTICAL = 36; // matches `body { padding: 18px }` (top+bottom)
+      const HEIGHT_BUFFER = 12;          // safety margin for sub-pixel rounding & borders
+      let lastReportedHeight = 0;
+
+      function reportHeight() {
+        // documentElement.scrollHeight already includes body padding in modern
+        // Chromium, but Figma's plugin iframe has occasionally returned values
+        // 1–2px short under load — the buffer absorbs that without going overboard.
+        const h = Math.max(
+          document.documentElement.scrollHeight,
+          document.body.scrollHeight + BODY_PADDING_VERTICAL,
+        ) + HEIGHT_BUFFER;
+        if (Math.abs(h - lastReportedHeight) < 2) return; // de-dupe noise
+        lastReportedHeight = h;
+        parent.postMessage({ pluginMessage: { type: "resize", height: h } }, "*");
+      }
+
+      // Initial measurement after first paint (two RAFs to clear style/layout).
+      requestAnimationFrame(() => requestAnimationFrame(reportHeight));
+
+      // Box-size changes (status text appears, file-size grows).
+      if (typeof ResizeObserver !== "undefined") {
+        new ResizeObserver(reportHeight).observe(document.body);
+      }
+      // display:none ↔ display:block transitions don't always fire
+      // ResizeObserver — MutationObserver covers attribute/class changes.
+      if (typeof MutationObserver !== "undefined") {
+        new MutationObserver(reportHeight).observe(document.body, {
+          attributes: true,
+          attributeFilter: ["class", "style"],
+          subtree: true,
+          childList: true,
+        });
+      }
+      // Final fallback for animation/font-load layout shifts.
+      window.addEventListener("load", reportHeight);
     </script>
   </body>
 </html>

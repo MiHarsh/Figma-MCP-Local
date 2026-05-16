@@ -1,49 +1,130 @@
 # Framelink Exporter — Figma Plugin
 
-A Figma desktop plugin that exports design node data as JSON files compatible with the Framelink MCP server. This bypasses the Figma REST API entirely, letting you work with local files instead — especially useful on free-tier Figma plans with aggressive rate limits.
+Companion plugin for [**figma-local-mcp**](https://github.com/MiHarsh/figma-local-mcp) — exports Figma design data + assets (PNG renders, SVG icons, image-fill bytes) as a single `.zip` so AI coding agents can consume your designs without an API key, OAuth dance, or rate limits.
 
-## How It Works
+> **Heads up:** this plugin is the *producer*. The `.zip` it generates is meant to be unzipped into your repo and read by the MCP server. You need both pieces installed.
 
-The plugin serializes the Figma Plugin API's node tree into the exact JSON shape that the Figma REST API returns (`GetFileNodesResponse` for selected nodes, `GetFileResponse` for full-page exports). The exported JSON can be consumed directly by the Framelink MCP extractor pipeline.
+🎨 **Figma Community:** <https://www.figma.com/community/plugin/1626137893880787983/framelink-exporter>
+📦 **MCP server:** [`figma-local-mcp`](https://www.npmjs.com/package/figma-local-mcp) on npm
+🐙 **Source / issues:** https://github.com/MiHarsh/figma-local-mcp
 
-## Setup
+---
+
+## Quick start
+
+### 1. Install the MCP server
+
+```bash
+npm install -g figma-local-mcp     # or use npx in your client config
+```
+
+### 2. Add it to your AI client
+
+<details><summary><b>Cursor / Cline / Claude Desktop (MCP config snippet)</b></summary>
+
+```jsonc
+{
+  "mcpServers": {
+    "figma-local": {
+      "command": "npx",
+      "args": ["-y", "figma-local-mcp", "--stdio"]
+    }
+  }
+}
+```
+
+Restart the client. You should see three new tools: `get_figma_data_from_json`, `get_node_image`, `get_node_svg`.
+</details>
+
+### 3. Install this plugin in Figma
+
+**Option A: Install from the Figma Community (recommended)** — zero build, auto-updates.
+
+Open the plugin's Community page: <https://www.figma.com/community/plugin/1626137893880787983/framelink-exporter> → click **Open in…** to add it to your Figma. It will appear under **Plugins → Framelink Exporter** in every file.
+
+**Option B: Build & sideload from source** (useful for development)
 
 ```bash
 cd figma-plugin
-npm install   # or pnpm install
+npm install
 npm run build
 ```
 
-## Installing in Figma
+Then in the Figma desktop app: **Plugins → Development → Import plugin from manifest…** → pick `figma-plugin/manifest.json`.
 
-1. Open the Figma desktop app
-2. Go to **Plugins → Development → Import plugin from manifest...**
-3. Select `figma-plugin/manifest.json` from this repo
-4. The plugin will appear under **Plugins → Development → Framelink Exporter**
+### 4. Export → unzip → ask your agent
 
-## Usage
+1. Run **Plugins → Development → Framelink Exporter**
+2. Select the frames you want to export
+3. Click **Export as ZIP** → unzip into your repo (e.g. `./design/`)
+4. In your AI client:
+   > *"Build a React component matching `./design/myfile.json`"*
 
-1. Open a Figma file
-2. Run the plugin from **Plugins → Development → Framelink Exporter**
-3. Select the nodes you want to export (frames, components, pages)
-4. Click **Export as JSON** (or **Export Current Page** for the full page)
-5. Save the downloaded JSON file to your project
+The agent calls `get_figma_data_from_json` → reads the manifest → calls `get_node_image` for ground truth → calls `get_node_svg` for icons → generates code with the actual rendered design as a reference.
 
-### Options
+---
 
-- **Export selected nodes** — Exports only what you've selected (produces `GetFileNodesResponse` format)
-- **Export current page** — Exports the entire page (produces `GetFileResponse` format)
-- **Limit traversal depth** — Caps how many levels deep the tree serialization goes
+## How it works
 
-## Exported Data Format
+The plugin serializes the Figma node tree into the exact JSON shape that the Figma REST API returns (`GetFileNodesResponse` for selected nodes, `GetFileResponse` for full-page exports), with a `framelinkExport` metadata block at the root carrying an asset manifest.
 
-The plugin captures the same properties that Framelink's extractors consume:
+When asset export is enabled (default), the plugin packages the JSON + an `<filename>.assets/` folder of sidecar files into a single `.zip` download.
 
-- **Layout** — `absoluteBoundingBox`, `constraints`, auto-layout props (`layoutMode`, `itemSpacing`, `padding*`, sizing modes)
+## Export options
+
+- **Scope**
+  - *Export selected nodes* — produces `GetFileNodesResponse` shape
+  - *Export current page* — produces `GetFileResponse` shape
+- **Assets**
+  - *Render selected frames as PNG (@2x)* — top-level frames are rendered for visual grounding
+  - *Export icon subtrees as SVG* — vector-only subtrees are rendered as actual SVG markup (no path-data reconstruction needed)
+  - *Include image-fill bytes* — raster fills referenced by `imageRef` are saved as PNG bytes
+- **Limit traversal depth** — caps how many levels deep the tree serialization goes
+
+## What gets exported
+
+Everything Framelink's extractors consume, plus the new asset references the MCP wires into the simplified output:
+
+- **Layout** — `absoluteBoundingBox`, `constraints`, auto-layout (`layoutMode`, `itemSpacing`, `padding*`, sizing modes)
 - **Visuals** — `fills`, `strokes`, `effects`, `opacity`, `cornerRadius`, `blendMode`, `clipsContent`
-- **Text** — `characters`, `style` (font family, size, weight, alignment, line height, letter spacing), `styleOverrideTable`
-- **Components** — `componentProperties`, `componentPropertyDefinitions`, `componentId`
+- **Per-node named-style references** — the `styles` map (`{fill, text, effect, stroke}` → styleId) so the extractor can resolve design-system style names
+- **Text** — `characters`, `style` (font, size, weight, alignment, line height), `styleOverrideTable`
+- **Components** — `componentProperties`, `componentPropertyDefinitions`, `componentId`, plus cross-scope component metadata for instances whose main component lives outside the export scope
 - **Structure** — Full node tree with `id`, `name`, `type`, `visible`, `children`
+
+### Asset manifest (`framelinkExport`)
+
+A top-level `framelinkExport` block carries metadata + the asset manifest:
+
+```jsonc
+{
+  "framelinkExport": {
+    "pluginVersion": "1.2.0",
+    "exportedAt": "2026-05-16T...",
+    "scope": "selection",
+    "depth": null,
+    "fileName": "MyDesignFile",
+    "pageId": "0:1",
+    "pageName": "Page 1",
+    "rootNodeIds": ["1:23"],
+    "assetsFolder": "design.assets",
+    "assets": {
+      "1:23": { "image": "design.assets/node_1_23.png", "imageScale": 2 },
+      "5:67": { "svg":   "design.assets/icon_5_67.svg" }
+    },
+    "imageFills": {
+      "abc123...": "design.assets/image_abc123.png"
+    },
+    "options": { "exportFrameImages": true, "exportSvgs": true, "exportImageFills": true }
+  }
+}
+```
+
+The MCP server reads this block and:
+- stamps `imagePath` / `svgPath` / `renderHint` onto matching nodes in the simplified output
+- resolves `componentId` → `componentName` + heuristic `semanticRole` (button, textbox, dropdown, …) on every INSTANCE so generated code uses semantic markup
+- injects local `assetPath` into image-fill style entries
+- emits a top-level `REQUIRED_NEXT_ACTIONS` checklist telling the agent which `get_node_image` / `get_node_svg` calls to make
 
 ## Development
 
@@ -51,20 +132,24 @@ The plugin captures the same properties that Framelink's extractors consume:
 npm run watch   # Rebuild on file changes
 ```
 
-After making changes, reload the plugin in Figma: **Plugins → Development → Framelink Exporter** (right-click → **Run last plugin** or re-open it).
+After editing, reload the plugin in Figma (right-click in the plugin menu → **Run last plugin** or re-open it).
 
-## Project Structure
+## Project structure
 
 ```
 figma-plugin/
 ├── manifest.json       # Figma plugin manifest
-├── package.json        # Dependencies & scripts
-├── tsconfig.json       # TypeScript config
-├── build.mjs           # esbuild build script
+├── package.json
+├── tsconfig.json
+├── build.mjs           # esbuild build (target: es2017 — Figma sandbox safe)
 ├── src/
-│   ├── code.ts         # Plugin sandbox code (node serialization)
-│   └── ui.html         # Plugin UI (export controls + download)
+│   ├── code.ts         # Plugin sandbox: node serialization + asset rendering
+│   └── ui.html         # Plugin UI: export controls + inline ZIP packager
 └── dist/               # Build output (git-ignored)
     ├── code.js
     └── ui.html
 ```
+
+## License
+
+MIT — same as the parent [figma-local-mcp](https://github.com/MiHarsh/figma-local-mcp) project.
