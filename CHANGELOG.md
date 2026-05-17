@@ -1,5 +1,12 @@
 # figma-local-mcp
 
+## [0.5.0](https://github.com/MiHarsh/Figma-local-MCP/compare/v0.4.0...v0.5.0) (2026-05-17)
+
+
+### Features
+
+* **plugin:** v1.3.0 — smart SVG filter, parallel asset exports, resilient broken-component handling ([52e06b8](https://github.com/MiHarsh/Figma-local-MCP/commit/52e06b8f4396719c284afa10489107415e8cb312))
+
 ## [0.4.0](https://github.com/MiHarsh/Figma-local-MCP/compare/v0.3.1...v0.4.0) (2026-05-16)
 
 
